@@ -1,11 +1,12 @@
 /** @format */
 
 import express from "express"
+import Product from "../products/model.js"
 import Category from "./model.js"
 
 const categoryRouter = express.Router()
 
-categoryRouter.get("/", async (req, res, next) => {
+categoryRouter.get("/bulk", async (req, res, next) => {
   try {
     const categories = await Category.findAll()
     res.send(categories)

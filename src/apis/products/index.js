@@ -7,26 +7,36 @@ import Category from "../categories/model.js"
 import ProductCategory from "./productCtegory.js"
 import Users from "../users/model.js"
 import Review from "../reviews/model.js"
+import User from "../users/model.js"
 
 const productRouter = express.Router()
 
 productRouter.get("/", async (req, res, next) => {
+  // const limit = 5
+  // const offset = (req.query.offset - 1) * limit
   try {
     // const products = await Product.findAll({
     //   attributes: ["name", "category", "price", "description", "image", "id"],
     //   where: query,
     // })
-
+    if (req.query.categories) {
+      query.categories = {
+        [Op.iLike]: `%${req.query.categories}%`,
+      }
+    }
     const products = await Product.findAll({
       include: [
         Users,
         {
           model: Category,
-          attributes: ["name", "id"],
+          attributes: ["id", "name"],
           through: { attributes: [] },
         },
         Review,
       ],
+      // offset,
+      // limit,
+      where: query,
     })
     res.send(products)
   } catch (error) {
@@ -37,32 +47,17 @@ productRouter.get("/", async (req, res, next) => {
 
 productRouter.get("/:id", async (req, res, next) => {
   try {
-    const product = await Product.findByPk(req.params.id)
+    const product = await Product.findByPk(req.params.id, {
+      include: [Users, Category, Review],
+    })
     res.send(product)
   } catch (error) {
     console.log(error)
     next(error)
   }
 })
-
 productRouter.post("/", async (req, res, next) => {
   try {
-    // const newProduct = await Product.create({
-    //   name: req.body.name,
-    //   category: req.body.category,
-    //   description: req.body.description,
-    //   image: req.body.image,
-    //   price: req.body.price,
-    //   userId: req.body.userId,
-    // })
-
-    // if (newProduct.id) {
-    //   const dataToInsert = req.body.categories.map((categoryId) => ({
-    //     categoryId: categoryId,
-    //     productId: newProduct.id,
-    //   }))
-
-    // await ProductCategory.bulkCreate(dataToInsert)
     const product = await Product.create(req.body)
     res.send(product)
   } catch (error) {
@@ -70,6 +65,32 @@ productRouter.post("/", async (req, res, next) => {
     next(error)
   }
 })
+
+// productRouter.post("/", async (req, res, next) => {
+//   try {
+//     const product = await Product.create({
+//       name: req.body.name,
+//       description: req.body.description,
+//       image: req.body.image,
+//       price: req.body.price,
+//       userId: req.body.userId,
+//     })
+
+//     if (product) {
+//       const dataToInsert = req.body.categories.map((categoryId) => ({
+//         categoryId: categoryId,
+//         productId: product.id,
+//       }))
+
+//       const newProduct = await ProductCategory.bulkCreate(dataToInsert)
+//       res.send(newProduct)
+//     }
+//     //const product = await Product.create(req.body)
+//   } catch (error) {
+//     console.log(error)
+//     next(error)
+//   }
+// })
 productRouter.put("/:id", async (req, res, next) => {
   try {
     const product = await Product.update(req.body, {
@@ -92,6 +113,36 @@ productRouter.delete("/:id", async (req, res, next) => {
       },
     })
     res.send({ rows: result })
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+})
+productRouter.get("/:productId/reviews", async (req, res, next) => {
+  try {
+    const product = await Product.findByPk(req.params.productId, {
+      include: Review,
+    })
+    res.send(product.reviews)
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+})
+productRouter.get("/:productId/categories", async (req, res, next) => {
+  try {
+    const product = await Product.findByPk(req.params.productId, {
+      include: Category,
+    })
+    product.categories = await Product.create(req.body)
+    res.send(product.categories)
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+})
+productRouter.post("/:productId/addCategories", async (req, res, next) => {
+  try {
   } catch (error) {
     console.log(error)
     next(error)
